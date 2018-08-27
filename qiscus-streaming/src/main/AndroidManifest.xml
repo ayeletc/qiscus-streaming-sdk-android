@@ -17,11 +17,10 @@
         android:label="@string/app_name"
         android:supportsRtl="true">
         <activity
-            android:name=".ui.activity.QiscusStreamActivity"
+            android:name=".ui.activity.QiscusVideoStreamActivity"
             android:excludeFromRecents="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
-        <service android:name="io.antmedia.android.broadcaster.LiveVideoBroadcaster" />
     </application>
 
 </manifest>

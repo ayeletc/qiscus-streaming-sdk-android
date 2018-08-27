@@ -34,11 +34,12 @@ import net.ossrs.rtmp.ConnectCheckerRtmp;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class QiscusStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
-    private static final String TAG = QiscusStreamActivity.class.getSimpleName();
+public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
+    private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
 
     private String[] permissions = {
             Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
@@ -55,7 +56,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     private long elapsedTime;
 
     public static Intent generateIntent(Context context, String url, QiscusStreamParameter parameter) {
-        Intent intent = new Intent(context, QiscusStreamActivity.class);
+        Intent intent = new Intent(context, QiscusVideoStreamActivity.class);
         intent.putExtra("STREAM_PARAMETER", parameter);
         streamUrl = url;
         streamParameter = parameter;
@@ -70,7 +71,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(R.layout.activity_qiscus_stream);
+        setContentView(R.layout.activity_qiscus_video_stream);
 
         rootView = (ViewGroup) findViewById(R.id.root_layout);
         surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
@@ -104,7 +105,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                 //
             } else {
-                new AlertDialog.Builder(QiscusStreamActivity.this)
+                new AlertDialog.Builder(QiscusVideoStreamActivity.this)
                         .setTitle("Qiscus Streaming SDK")
                         .setMessage("Permission error.")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -293,7 +294,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
                 case CONNECTION_LOST:
 
                     try {
-                        new AlertDialog.Builder(QiscusStreamActivity.this)
+                        new AlertDialog.Builder(QiscusVideoStreamActivity.this)
                                 .setMessage("Connection to RTMP server is lost.")
                                 .setPositiveButton(android.R.string.yes, null)
                                 .show();
@@ -335,7 +336,9 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     }
 
     private void requestPermission(String[] requestedPermission) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, requestedPermission, 101);
         } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             //

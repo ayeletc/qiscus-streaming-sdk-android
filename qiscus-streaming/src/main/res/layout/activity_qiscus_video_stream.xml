@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/root_layout"
-    tools:context="com.qiscus.streaming.ui.activity.QiscusStreamActivity">
+    tools:context="com.qiscus.streaming.ui.activity.QiscusVideoStreamActivity">
 
     <SurfaceView
         android:id="@+id/surfaceView"

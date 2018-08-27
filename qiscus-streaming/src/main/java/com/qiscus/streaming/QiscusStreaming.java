@@ -9,7 +9,7 @@ import android.util.Log;
 import com.qiscus.streaming.data.QiscusStream;
 import com.qiscus.streaming.data.QiscusStreamParameter;
 import com.qiscus.streaming.data.VideoQuality;
-import com.qiscus.streaming.ui.activity.QiscusStreamActivity;
+import com.qiscus.streaming.ui.activity.QiscusVideoStreamActivity;
 import com.qiscus.streaming.util.AsyncHttpUrlConnection;
 import com.qiscus.streaming.util.CreateStreamListener;
 
@@ -29,6 +29,7 @@ public class QiscusStreaming {
     private static AsyncHttpUrlConnection httpConnection;
     private static QiscusStream stream;
     private static String apiKey;
+    private static boolean audioOnly = false;
 
     public static Application getAppInstance() {
         return application;
@@ -85,6 +86,10 @@ public class QiscusStreaming {
         httpConnection.send();
     }
 
+    public static void setAudioOnly(boolean audio) {
+        audioOnly = audio;
+    }
+
     public static RequiredStreamUrl buildStream(String streamUrl) {
         return new StreamActivityBuilder(streamUrl);
     }
@@ -131,7 +136,7 @@ public class QiscusStreaming {
 
         @Override
         public QiscusStreaming start(Context context) {
-            Intent intent = new Intent(QiscusStreamActivity.generateIntent(context, streamUrl, streamParameter));
+            Intent intent = new Intent(QiscusVideoStreamActivity.generateIntent(context, streamUrl, streamParameter));
             intent.putExtra("STREAM_URL", streamUrl);
             context.startActivity(intent);
             return this;

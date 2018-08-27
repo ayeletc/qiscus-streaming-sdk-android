@@ -181,6 +181,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     }
 
     private void startStream() {
+        streamLiveStatus.setText("Connecting");
         broadcast.setText("Stop");
         broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_red));
         broadcast.setTextColor(getResources().getColor(R.color.white));

@@ -104,12 +104,12 @@ public class SimpleCustomChatFragment extends QiscusChatFragment {
 
         Log.d("test", "sendStreamVideo: " + payload);
         QiscusComment comment = generateButtonMessage(message, "buttons", payload,
-                qiscusChatRoom.getId(), qiscusChatRoom.getLastTopicId());
+                qiscusChatRoom.getId());
         sendQiscusComment(comment);
     }
 
-    public static QiscusComment generateButtonMessage(String text, String type, JSONObject content, int roomId, int topicId) {
-        QiscusComment qiscusComment = generateMessage(text, roomId, topicId);
+    public static QiscusComment generateButtonMessage(String text, String type, JSONObject content, long roomId) {
+        QiscusComment qiscusComment = generateMessage(roomId, text);
         qiscusComment.setRawType("buttons");
 
         qiscusComment.setExtraPayload(content.toString());

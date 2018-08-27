@@ -1,28 +1,25 @@
 package com.qiscus.streaming.ui.activity;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.hardware.Camera;
 import android.net.Uri;
-import android.opengl.GLSurfaceView;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.widget.ContentLoadingProgressBar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -30,139 +27,141 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.pedro.rtplibrary.rtmp.RtmpCamera1;
 import com.qiscus.streaming.R;
 import com.qiscus.streaming.data.QiscusStreamParameter;
+import com.qiscus.streaming.data.Resolution;
 import com.qiscus.streaming.ui.fragment.CameraResolutionsFragment;
+
+import net.ossrs.rtmp.ConnectCheckerRtmp;
 
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import io.antmedia.android.broadcaster.ILiveVideoBroadcaster;
-import io.antmedia.android.broadcaster.LiveVideoBroadcaster;
-import io.antmedia.android.broadcaster.utils.Resolution;
-
-
-public class QiscusStreamActivity extends AppCompatActivity {
+public class QiscusStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusStreamActivity.class.getSimpleName();
 
-    private ILiveVideoBroadcaster liveVideoBroadcaster;
-    private Intent liveVideoBroadcasterServiceIntent;
-    private CameraResolutionsFragment mCameraResolutionsDialog;
+    private String[] permissions = {
+            Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
+
+    private static String streamUrl;
+    private static QiscusStreamParameter streamParameter;
+    private RtmpCamera1 rtmpCamera;
+    private CameraResolutionsFragment cameraResolutionsDialog;
     private ViewGroup rootView;
-    private GLSurfaceView glView;
-    private Button broadcastControlButton;
-    private ImageButton settingsButton;
+    private SurfaceView surfaceView;
+    private Button broadcast;
+    private ImageButton settings;
+    private ImageButton switchCamera;
     private TextView streamLiveStatus;
     private TimerHandler timerHandler;
     private Timer timer;
-    private String streamUrl;
     private long elapsedTime;
-    private boolean isRecording = false;
 
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            LiveVideoBroadcaster.LocalBinder binder = (LiveVideoBroadcaster.LocalBinder) service;
+    private int width;
+    private int height;
 
-            if (liveVideoBroadcaster == null) {
-                liveVideoBroadcaster = binder.getService();
-                liveVideoBroadcaster.init(QiscusStreamActivity.this, glView);
-                liveVideoBroadcaster.setAdaptiveStreaming(true);
-            }
-
-            liveVideoBroadcaster.openCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            liveVideoBroadcaster = null;
-        }
-    };
+    public static Intent generateIntent(Context context, String url, QiscusStreamParameter parameter) {
+        Intent intent = new Intent(context, QiscusStreamActivity.class);
+        intent.putExtra("STREAM_PARAMETER", parameter);
+        streamUrl = url;
+        streamParameter = parameter;
+        return intent;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle extras = getIntent().getExtras();
-        streamUrl = extras.getString("STREAM_URL");
+        requestPermission(permissions);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-        liveVideoBroadcasterServiceIntent = new Intent(this, LiveVideoBroadcaster.class);
-        startService(liveVideoBroadcasterServiceIntent);
-
         setContentView(R.layout.activity_qiscus_stream);
 
-        timerHandler = new TimerHandler();
         rootView = (ViewGroup) findViewById(R.id.root_layout);
-        settingsButton = (ImageButton) findViewById(R.id.settings_button);
+        surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        settings = (ImageButton) findViewById(R.id.settings);
+        switchCamera = (ImageButton) findViewById(R.id.switchCamera);
         streamLiveStatus = (TextView) findViewById(R.id.stream_live_status);
-        broadcastControlButton = (Button) findViewById(R.id.toggle_broadcasting);
-        glView = (GLSurfaceView) findViewById(R.id.cameraPreview_surfaceView);
+        broadcast = (Button) findViewById(R.id.broadcast);
+        timerHandler = new TimerHandler();
 
-        if (glView != null) {
-            glView.setEGLContextClientVersion(2);
-        }
+        rtmpCamera = new RtmpCamera1(surfaceView, this);
+
+        settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showSetResolutionDialog();
+            }
+        });
+
+        switchCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switchCamera();
+            }
+        });
+
+        broadcast.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggleBroadcasting();
+            }
+        });
+
+        surfaceView.getHolder().addCallback(this);
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        bindService(liveVideoBroadcasterServiceIntent, mConnection, 0);
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 101 && permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+                //
+            } else {
+                new AlertDialog.Builder(QiscusStreamActivity.this)
+                        .setTitle("Qiscus Streaming SDK")
+                        .setMessage("Permission error.")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                try {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
+                                    startActivity(intent);
+                                } catch (ActivityNotFoundException e) {
+                                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                                    startActivity(intent);
+                                }
+                            }
+                        })
+                        .show();
+            }
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        if (mCameraResolutionsDialog != null && mCameraResolutionsDialog.isVisible()) {
-            mCameraResolutionsDialog.dismiss();
+        if (cameraResolutionsDialog != null && cameraResolutionsDialog.isVisible()) {
+            cameraResolutionsDialog.dismiss();
         }
 
-        liveVideoBroadcaster.pause();
+        if (rtmpCamera.isStreaming()) {
+            rtmpCamera.stopStream();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unbindService(mConnection);
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case LiveVideoBroadcaster.PERMISSIONS_REQUEST: {
-                if (liveVideoBroadcaster.isPermissionGranted()) {
-                    liveVideoBroadcaster.openCamera(Camera.CameraInfo.CAMERA_FACING_BACK);
-                } else {
-                    if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                            Manifest.permission.CAMERA) ||
-                            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
-                        liveVideoBroadcaster.requestPermission();
-                    } else {
-                        new AlertDialog.Builder(QiscusStreamActivity.this)
-                                .setTitle(R.string.permission)
-                                .setMessage(getString(R.string.app_doesnot_work_without_permissions))
-                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        try {
-                                            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                            intent.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
-                                            startActivity(intent);
-                                        } catch (ActivityNotFoundException e) {
-                                            Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
-                                            startActivity(intent);
-                                        }
-                                    }
-                                })
-                                .show();
-                    }
-                }
-
-                return;
-            }
+        if (rtmpCamera.isStreaming()) {
+            rtmpCamera.stopStream();
+            rtmpCamera.stopPreview();
         }
     }
 
@@ -170,12 +169,15 @@ public class QiscusStreamActivity extends AppCompatActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE || newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            liveVideoBroadcaster.setDisplayOrientation();
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            rtmpCamera.setPreviewOrientation(90);
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            rtmpCamera.setPreviewOrientation(0);
         }
     }
 
-    public void showSetResolutionDialog(View v) {
+    private void showSetResolutionDialog() {
+        /*
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment fragmentDialog = getSupportFragmentManager().findFragmentByTag("dialog");
 
@@ -183,85 +185,55 @@ public class QiscusStreamActivity extends AppCompatActivity {
             ft.remove(fragmentDialog);
         }
 
-        ArrayList<Resolution> sizeList = liveVideoBroadcaster.getPreviewSizeList();
+        ArrayList<String> list = new ArrayList<>();
+        list.add("QVGA");
+        list.add("LD");
+        list.add("SD");
+        list.add("HD");
 
-        if (sizeList != null && sizeList.size() > 0) {
-            mCameraResolutionsDialog = new CameraResolutionsFragment();
-            mCameraResolutionsDialog.setCameraResolutions(sizeList, liveVideoBroadcaster.getPreviewSize());
-            mCameraResolutionsDialog.show(ft, "resolutiton_dialog");
+        if (list != null && list.size() > 0) {
+            cameraResolutionsDialog = new CameraResolutionsFragment();
+            cameraResolutionsDialog.show(ft, "dialog");
         } else {
-            Snackbar.make(rootView, "No resolution available.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(rootView, "No resolution available.", Snackbar.LENGTH_SHORT).show();
         }
+        */
     }
 
-    public void changeCamera(View v) {
-        if (liveVideoBroadcaster != null) {
-            liveVideoBroadcaster.changeCamera();
-        }
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    public void toggleBroadcasting(View v) {
-        if (!isRecording) {
-            if (liveVideoBroadcaster != null) {
-                if (!liveVideoBroadcaster.isConnected()) {
-                    new AsyncTask<String, String, Boolean>() {
-                        ContentLoadingProgressBar progressBar;
-
-                        @Override
-                        protected void onPreExecute() {
-                            progressBar = new ContentLoadingProgressBar(QiscusStreamActivity.this);
-                            progressBar.show();
-                        }
-
-                        @Override
-                        protected Boolean doInBackground(String... url) {
-                            return liveVideoBroadcaster.startBroadcasting(url[0]);
-
-                        }
-
-                        @Override
-                        protected void onPostExecute(Boolean result) {
-                            progressBar.hide();
-                            isRecording = result;
-
-                            if (result) {
-                                streamLiveStatus.setVisibility(View.VISIBLE);
-                                broadcastControlButton.setText("Stop");
-                                broadcastControlButton.setBackground(getResources().getDrawable(R.drawable.round_button_red));
-                                broadcastControlButton.setTextColor(getResources().getColor(R.color.white));
-                                settingsButton.setVisibility(View.GONE);
-                                startTimer();
-                            } else {
-                                Snackbar.make(rootView, "Failed to start. Please check server url and security credentials. ", Snackbar.LENGTH_LONG).show();
-                                triggerStopRecording();
-                            }
-                        }
-                    }.execute(streamUrl);
-                } else {
-                    Snackbar.make(rootView, "Your previous broadcast still sends packets due to slow internet speed.", Snackbar.LENGTH_LONG).show();
-                }
+    private void toggleBroadcasting() {
+        if (!rtmpCamera.isStreaming()) {
+            if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo()) {
+                startStream();
             } else {
-                Snackbar.make(rootView, "Unknown error.", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(rootView, "Error preparing stream.", Snackbar.LENGTH_SHORT).show();
             }
         } else {
-            triggerStopRecording();
+            stopStream();
         }
     }
 
-    public void triggerStopRecording() {
-        if (isRecording) {
-            broadcastControlButton.setText("Start");
-            broadcastControlButton.setBackground(getResources().getDrawable(R.drawable.round_button_white));
-            broadcastControlButton.setTextColor(getResources().getColor(R.color.black));
-            streamLiveStatus.setVisibility(View.GONE);
-            streamLiveStatus.setText("Offline");
-            streamLiveStatus.setVisibility(View.VISIBLE);
-            liveVideoBroadcaster.stopBroadcasting();
-            stopTimer();
+    public void switchCamera() {
+        if (rtmpCamera != null) {
+            rtmpCamera.switchCamera();
         }
+    }
 
-        isRecording = false;
+    private void startStream() {
+        broadcast.setText("Stop");
+        broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_red));
+        broadcast.setTextColor(getResources().getColor(R.color.white));
+        settings.setVisibility(View.GONE);
+        rtmpCamera.startStream(streamUrl);
+    }
+
+    private void stopStream() {
+        streamLiveStatus.setText("Offline");
+        broadcast.setText("Start");
+        broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
+        broadcast.setTextColor(getResources().getColor(R.color.black));
+        settings.setVisibility(View.VISIBLE);
+        rtmpCamera.stopStream();
+        stopTimer();
     }
 
     public void startTimer() {
@@ -275,7 +247,7 @@ public class QiscusStreamActivity extends AppCompatActivity {
                 elapsedTime += 1; //increase every sec
                 timerHandler.obtainMessage(TimerHandler.INCREASE_TIMER).sendToTarget();
 
-                if (liveVideoBroadcaster == null || !liveVideoBroadcaster.isConnected()) {
+                if (rtmpCamera == null || !rtmpCamera.isStreaming()) {
                     timerHandler.obtainMessage(TimerHandler.CONNECTION_LOST).sendToTarget();
                 }
             }
@@ -284,14 +256,88 @@ public class QiscusStreamActivity extends AppCompatActivity {
 
     public void stopTimer() {
         if (timer != null) {
-            this.timer.cancel();
+            timer.cancel();
         }
-        this.timer = null;
-        this.elapsedTime = 0;
+
+        timer = null;
+        elapsedTime = 0;
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        rtmpCamera.startPreview();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+        rtmpCamera.startPreview();
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        if (rtmpCamera.isStreaming()) {
+            streamLiveStatus.setText("Offline");
+            broadcast.setText("Start");
+            broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
+            broadcast.setTextColor(getResources().getColor(R.color.black));
+            rtmpCamera.stopStream();
+            stopTimer();
+        }
+
+        rtmpCamera.stopPreview();
+    }
+
+    @Override
+    public void onConnectionSuccessRtmp() {
+        startTimer();
+    }
+
+    @Override
+    public void onConnectionFailedRtmp(final String s) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Snackbar.make(rootView, "Streaming failed. Error: " + s, Snackbar.LENGTH_SHORT).show();
+                stopStream();
+            }
+        });
+    }
+
+    @Override
+    public void onDisconnectRtmp() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                streamLiveStatus.setText("Offline");
+            }
+        });
+    }
+
+    @Override
+    public void onAuthErrorRtmp() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Snackbar.make(rootView, "Invalid credential.", Snackbar.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onAuthSuccessRtmp() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                //
+            }
+        });
     }
 
     public void setResolution(Resolution size) {
-        liveVideoBroadcaster.setResolution(size);
+        if (size.width > 0 && size.height > 0) {
+            width = size.width;
+            height = size.height;
+        }
     }
 
     private class TimerHandler extends Handler {
@@ -304,7 +350,6 @@ public class QiscusStreamActivity extends AppCompatActivity {
                     streamLiveStatus.setText("Live - " + getDurationString((int) elapsedTime));
                     break;
                 case CONNECTION_LOST:
-                    triggerStopRecording();
 
                     try {
                         new AlertDialog.Builder(QiscusStreamActivity.this)
@@ -320,7 +365,7 @@ public class QiscusStreamActivity extends AppCompatActivity {
         }
     }
 
-    public static String getDurationString(int seconds) {
+    private static String getDurationString(int seconds) {
         if (seconds < 0 || seconds > 2000000) {
             seconds = 0;
         }
@@ -336,7 +381,7 @@ public class QiscusStreamActivity extends AppCompatActivity {
         }
     }
 
-    public static String twoDigitString(int number) {
+    private static String twoDigitString(int number) {
         if (number == 0) {
             return "00";
         }
@@ -346,5 +391,13 @@ public class QiscusStreamActivity extends AppCompatActivity {
         }
 
         return String.valueOf(number);
+    }
+
+    private void requestPermission(String[] requestedPermission) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, requestedPermission, 101);
+        } else if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            //
+        }
     }
 }

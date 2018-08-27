@@ -13,11 +13,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.qiscus.streaming.R;
+import com.qiscus.streaming.data.Resolution;
 import com.qiscus.streaming.ui.activity.QiscusStreamActivity;
 
 import java.util.ArrayList;
-
-import io.antmedia.android.broadcaster.utils.Resolution;
 
 /**
  * Created by fitra on 12/04/18.
@@ -28,8 +27,8 @@ public class CameraResolutionsFragment extends DialogFragment implements Adapter
     private static final String SELECTED_SIZE_WIDTH = "SELECTED_SIZE_WIDTH";
     private static final String SELECTED_SIZE_HEIGHT = "SELECTED_SIZE_HEIGHT";
 
-    private ListView cameraResolutionsListView;
     private Dialog dialog;
+    private ListView cameraResolutionsListView;
     private CameResolutionsAdapter resolutionAdapter = new CameResolutionsAdapter();
 
     private ArrayList<Resolution> cameraResolutions;

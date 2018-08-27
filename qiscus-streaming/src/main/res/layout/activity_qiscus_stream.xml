@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/root_layout"
     tools:context="com.qiscus.streaming.ui.activity.QiscusStreamActivity">
 
-    <android.opengl.GLSurfaceView
-        android:id="@+id/cameraPreview_surfaceView"
+    <SurfaceView
+        android:id="@+id/surfaceView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:visibility="gone" />
+        android:layout_gravity="center" />
 
     <View
-        android:id="@+id/transparent_cover"
+        android:id="@+id/cover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#77000000" />
@@ -29,20 +27,18 @@
         android:orientation="horizontal"
         android:visibility="visible">
         <ImageButton
-            android:id="@+id/settings_button"
+            android:id="@+id/settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:src="@drawable/ic_settings_white"
-            android:onClick="showSetResolutionDialog"
             style="?attr/borderlessButtonStyle" />
         <ImageButton
-            android:id="@+id/changeCameraButton"
+            android:id="@+id/switchCamera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:src="@drawable/ic_switch_camera_white"
-            android:onClick="changeCamera"
             style="?attr/borderlessButtonStyle" />
         <android.support.v4.widget.Space
             android:layout_width="0dp"
@@ -65,18 +61,17 @@
         android:layout_gravity="bottom"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:orientation="vertical"
         android:padding="2dp"
-        android:visibility="visible">
+        android:visibility="visible"
+        android:orientation="vertical">
         <Button
-            android:id="@+id/toggle_broadcasting"
+            android:id="@+id/broadcast"
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_gravity="center_horizontal"
             android:background="@drawable/round_button_white"
             android:textColor="@color/black"
             android:text="Start"
-            android:onClick="toggleBroadcasting"
             style="@style/Base.Widget.AppCompat.Button.Colored" />
     </LinearLayout>
 </RelativeLayout>

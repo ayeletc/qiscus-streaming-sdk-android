@@ -50,11 +50,9 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     private static String streamUrl;
     private static QiscusStreamParameter streamParameter;
     private RtmpCamera1 rtmpCamera;
-    private CameraResolutionsFragment cameraResolutionsDialog;
     private ViewGroup rootView;
     private SurfaceView surfaceView;
     private Button broadcast;
-    private ImageButton settings;
     private ImageButton switchCamera;
     private TextView streamLiveStatus;
     private TimerHandler timerHandler;
@@ -84,20 +82,12 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
 
         rootView = (ViewGroup) findViewById(R.id.root_layout);
         surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
-        settings = (ImageButton) findViewById(R.id.settings);
         switchCamera = (ImageButton) findViewById(R.id.switchCamera);
         streamLiveStatus = (TextView) findViewById(R.id.stream_live_status);
         broadcast = (Button) findViewById(R.id.broadcast);
         timerHandler = new TimerHandler();
 
         rtmpCamera = new RtmpCamera1(surfaceView, this);
-
-        settings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showSetResolutionDialog();
-            }
-        });
 
         switchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,10 +136,6 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     protected void onPause() {
         super.onPause();
 
-        if (cameraResolutionsDialog != null && cameraResolutionsDialog.isVisible()) {
-            cameraResolutionsDialog.dismiss();
-        }
-
         if (rtmpCamera.isStreaming()) {
             rtmpCamera.stopStream();
         }
@@ -176,33 +162,9 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
         }
     }
 
-    private void showSetResolutionDialog() {
-        /*
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment fragmentDialog = getSupportFragmentManager().findFragmentByTag("dialog");
-
-        if (fragmentDialog != null) {
-            ft.remove(fragmentDialog);
-        }
-
-        ArrayList<String> list = new ArrayList<>();
-        list.add("QVGA");
-        list.add("LD");
-        list.add("SD");
-        list.add("HD");
-
-        if (list != null && list.size() > 0) {
-            cameraResolutionsDialog = new CameraResolutionsFragment();
-            cameraResolutionsDialog.show(ft, "dialog");
-        } else {
-            Snackbar.make(rootView, "No resolution available.", Snackbar.LENGTH_SHORT).show();
-        }
-        */
-    }
-
     private void toggleBroadcasting() {
         if (!rtmpCamera.isStreaming()) {
-            if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo()) {
+            if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo(streamParameter.videoWidth, streamParameter.videoHeight, streamParameter.videoFps, streamParameter.videoBitrate, false, 0)) {
                 startStream();
             } else {
                 Snackbar.make(rootView, "Error preparing stream.", Snackbar.LENGTH_SHORT).show();
@@ -222,7 +184,6 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
         broadcast.setText("Stop");
         broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_red));
         broadcast.setTextColor(getResources().getColor(R.color.white));
-        settings.setVisibility(View.GONE);
         rtmpCamera.startStream(streamUrl);
     }
 
@@ -231,7 +192,6 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
         broadcast.setText("Start");
         broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
         broadcast.setTextColor(getResources().getColor(R.color.black));
-        settings.setVisibility(View.VISIBLE);
         rtmpCamera.stopStream();
         stopTimer();
     }

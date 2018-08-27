@@ -46,7 +46,7 @@ public class BasicStreamActivity extends AppCompatActivity {
 
             if (!streamUrl.isEmpty()) {
                 QiscusStreaming.buildStream(streamUrl)
-                        .setVideoQuality(VideoQuality.QVGA)
+                        .setVideoQuality(VideoQuality.VGA)
                         .start(BasicStreamActivity.this);
             } else {
                 Toast.makeText(BasicStreamActivity.this, "Publish stream URL can not be empty", Toast.LENGTH_SHORT);

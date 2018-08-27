@@ -69,7 +69,7 @@ public class SimpleCustomChatFragment extends QiscusChatFragment {
                 String message = Qiscus.getQiscusAccount().getUsername()+" Live Streaming Now!!!";
                 String deeplinkUri = "qiscus://com.android.streamer/watch?watchUrl="+stream.getWatchUrl();
                 QiscusStreaming.buildStream(stream.streamUrl)
-                        .setVideoQuality(VideoQuality.QVGA)
+                        .setVideoQuality(VideoQuality.VGA)
                         .start(getContext());
                 sendStreamVideo(message, deeplinkUri);
             }

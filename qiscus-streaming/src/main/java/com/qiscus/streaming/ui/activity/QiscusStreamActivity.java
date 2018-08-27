@@ -13,8 +13,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -30,12 +28,9 @@ import android.widget.TextView;
 import com.pedro.rtplibrary.rtmp.RtmpCamera1;
 import com.qiscus.streaming.R;
 import com.qiscus.streaming.data.QiscusStreamParameter;
-import com.qiscus.streaming.data.Resolution;
-import com.qiscus.streaming.ui.fragment.CameraResolutionsFragment;
 
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -58,9 +53,6 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
     private TimerHandler timerHandler;
     private Timer timer;
     private long elapsedTime;
-
-    private int width;
-    private int height;
 
     public static Intent generateIntent(Context context, String url, QiscusStreamParameter parameter) {
         Intent intent = new Intent(context, QiscusStreamActivity.class);
@@ -287,13 +279,6 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
                 //
             }
         });
-    }
-
-    public void setResolution(Resolution size) {
-        if (size.width > 0 && size.height > 0) {
-            width = size.width;
-            height = size.height;
-        }
     }
 
     private class TimerHandler extends Handler {

@@ -266,12 +266,7 @@ public class QiscusStreamActivity extends AppCompatActivity implements ConnectCh
 
     @Override
     public void onDisconnectRtmp() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                streamLiveStatus.setText("Offline");
-            }
-        });
+        stopStream();
     }
 
     @Override

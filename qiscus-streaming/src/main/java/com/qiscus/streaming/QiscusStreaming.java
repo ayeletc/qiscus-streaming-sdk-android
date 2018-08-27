@@ -114,12 +114,7 @@ public class QiscusStreaming {
                 streamParameter.videoHeight = 240;
                 streamParameter.videoFps = 15;
                 streamParameter.videoBitrate = 300 * 1024;
-            } else if (quality == VideoQuality.LD) {
-                streamParameter.videoWidth = 480;
-                streamParameter.videoHeight = 360;
-                streamParameter.videoFps = 20;
-                streamParameter.videoBitrate = 500 * 1024;
-            } else if (quality == VideoQuality.SD) {
+            } else if (quality == VideoQuality.VGA) {
                 streamParameter.videoWidth = 640;
                 streamParameter.videoHeight = 480;
                 streamParameter.videoFps = 24;

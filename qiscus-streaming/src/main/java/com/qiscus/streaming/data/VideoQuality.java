@@ -6,7 +6,6 @@ package com.qiscus.streaming.data;
 
 public enum VideoQuality {
     QVGA,
-    LD,
-    SD,
+    VGA,
     HD
 }

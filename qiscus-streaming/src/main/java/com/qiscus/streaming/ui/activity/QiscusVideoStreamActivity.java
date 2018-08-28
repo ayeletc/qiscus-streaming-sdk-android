@@ -264,14 +264,24 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             @Override
             public void run() {
                 Snackbar.make(rootView, "Streaming failed. Error: " + s, Snackbar.LENGTH_SHORT).show();
-                stopStream();
+
+                if (rtmpCamera.isStreaming()) {
+                    stopStream();
+                }
             }
         });
     }
 
     @Override
     public void onDisconnectRtmp() {
-        stopStream();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (rtmpCamera.isStreaming()) {
+                    stopStream();
+                }
+            }
+        });
     }
 
     @Override

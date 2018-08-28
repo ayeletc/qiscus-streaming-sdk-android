@@ -47,6 +47,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     private static QiscusStreamParameter streamParameter;
     private RtmpCamera1 rtmpCamera;
     private ViewGroup rootView;
+    private SurfaceView surfaceView;
     private Button broadcast;
     private TextView streamLiveStatus;
     private TimerHandler timerHandler;
@@ -72,13 +73,15 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         setContentView(R.layout.activity_qiscus_video_stream);
 
         rootView = (ViewGroup) findViewById(R.id.root_layout);
+        surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         streamLiveStatus = (TextView) findViewById(R.id.stream_live_status);
         broadcast = (Button) findViewById(R.id.broadcast);
         timerHandler = new TimerHandler();
-        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         ImageButton switchCamera = (ImageButton) findViewById(R.id.switchCamera);
 
-        rtmpCamera = new RtmpCamera1(surfaceView, this);
+        if (checkPermission()) {
+            rtmpCamera = new RtmpCamera1(surfaceView, this);
+        }
 
         switchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,26 +103,27 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == 101 && permissions.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
-                //
-            } else {
-                new AlertDialog.Builder(QiscusVideoStreamActivity.this)
-                        .setTitle("Qiscus Streaming SDK")
-                        .setMessage("Permission error.")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                try {
-                                    Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                    intent.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
-                                    startActivity(intent);
-                                } catch (ActivityNotFoundException e) {
-                                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
-                                    startActivity(intent);
-                                }
-                            }
-                        })
-                        .show();
+            if (rtmpCamera == null) {
+                rtmpCamera = new RtmpCamera1(surfaceView, this);
+                rtmpCamera.startPreview();
             }
+        } else {
+            new AlertDialog.Builder(QiscusVideoStreamActivity.this)
+                    .setTitle("Qiscus Streaming SDK")
+                    .setMessage("Permission error.")
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            try {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                intent.setData(Uri.parse("package:" + getApplicationContext().getPackageName()));
+                                startActivity(intent);
+                            } catch (ActivityNotFoundException e) {
+                                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
+                                startActivity(intent);
+                            }
+                        }
+                    })
+                    .show();
         }
     }
 
@@ -127,8 +131,10 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     protected void onPause() {
         super.onPause();
 
-        if (rtmpCamera.isStreaming()) {
-            rtmpCamera.stopStream();
+        if (rtmpCamera != null) {
+            if (rtmpCamera.isStreaming()) {
+                rtmpCamera.stopStream();
+            }
         }
     }
 
@@ -136,9 +142,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     protected void onStop() {
         super.onStop();
 
-        if (rtmpCamera.isStreaming()) {
-            rtmpCamera.stopStream();
-            rtmpCamera.stopPreview();
+        if (rtmpCamera != null) {
+            if (rtmpCamera.isStreaming()) {
+                rtmpCamera.stopStream();
+                rtmpCamera.stopPreview();
+            }
         }
     }
 
@@ -146,9 +154,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             rtmpCamera.setPreviewOrientation(90);
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+        } else if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             rtmpCamera.setPreviewOrientation(0);
         }
     }
@@ -217,26 +225,32 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        rtmpCamera.startPreview();
+        if (rtmpCamera != null) {
+            rtmpCamera.startPreview();
+        }
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-        rtmpCamera.startPreview();
+        if (rtmpCamera != null) {
+            rtmpCamera.startPreview();
+        }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        if (rtmpCamera.isStreaming()) {
-            streamLiveStatus.setText("Offline");
-            broadcast.setText("Start");
-            broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
-            broadcast.setTextColor(getResources().getColor(R.color.black));
-            rtmpCamera.stopStream();
-            stopTimer();
-        }
+        if (rtmpCamera != null) {
+            if (rtmpCamera.isStreaming()) {
+                streamLiveStatus.setText("Offline");
+                broadcast.setText("Start");
+                broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
+                broadcast.setTextColor(getResources().getColor(R.color.black));
+                rtmpCamera.stopStream();
+                stopTimer();
+            }
 
-        rtmpCamera.stopPreview();
+            rtmpCamera.stopPreview();
+        }
     }
 
     @Override
@@ -331,6 +345,16 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         }
 
         return String.valueOf(number);
+    }
+
+    private boolean checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void requestPermission(String[] requestedPermission) {

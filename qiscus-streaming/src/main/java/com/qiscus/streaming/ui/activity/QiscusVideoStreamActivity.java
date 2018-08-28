@@ -47,9 +47,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     private static QiscusStreamParameter streamParameter;
     private RtmpCamera1 rtmpCamera;
     private ViewGroup rootView;
-    private SurfaceView surfaceView;
     private Button broadcast;
-    private ImageButton switchCamera;
     private TextView streamLiveStatus;
     private TimerHandler timerHandler;
     private Timer timer;
@@ -74,11 +72,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         setContentView(R.layout.activity_qiscus_video_stream);
 
         rootView = (ViewGroup) findViewById(R.id.root_layout);
-        surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
-        switchCamera = (ImageButton) findViewById(R.id.switchCamera);
         streamLiveStatus = (TextView) findViewById(R.id.stream_live_status);
         broadcast = (Button) findViewById(R.id.broadcast);
         timerHandler = new TimerHandler();
+        SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        ImageButton switchCamera = (ImageButton) findViewById(R.id.switchCamera);
 
         rtmpCamera = new RtmpCamera1(surfaceView, this);
 

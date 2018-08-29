@@ -207,9 +207,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                 elapsedTime += 1; //increase every sec
                 timerHandler.obtainMessage(TimerHandler.INCREASE_TIMER).sendToTarget();
 
+                /*
                 if (rtmpCamera == null || !rtmpCamera.isStreaming()) {
                     timerHandler.obtainMessage(TimerHandler.CONNECTION_LOST).sendToTarget();
                 }
+                */
             }
         }, 0, 1000);
     }
@@ -314,7 +316,6 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     streamLiveStatus.setText("Live - " + getDurationString((int) elapsedTime));
                     break;
                 case CONNECTION_LOST:
-
                     try {
                         new AlertDialog.Builder(QiscusVideoStreamActivity.this)
                                 .setMessage("Connection to RTMP server is lost.")

@@ -163,7 +163,8 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
     private void toggleBroadcasting() {
         if (!rtmpCamera.isStreaming()) {
-            if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo(streamParameter.videoWidth, streamParameter.videoHeight, streamParameter.videoFps, streamParameter.videoBitrate, false, 90)) {
+            //if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo(streamParameter.videoWidth, streamParameter.videoHeight, streamParameter.videoFps, streamParameter.videoBitrate, false, 90)) {
+            if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo()) {
                 startStream();
             } else {
                 Snackbar.make(rootView, "Error preparing stream.", Snackbar.LENGTH_SHORT).show();

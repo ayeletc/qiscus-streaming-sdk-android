@@ -154,11 +154,13 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
+        /*
         if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             rtmpCamera.setPreviewOrientation(90);
         } else if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             rtmpCamera.setPreviewOrientation(0);
         }
+        */
     }
 
     private void toggleBroadcasting() {
@@ -262,11 +264,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     }
 
     @Override
-    public void onConnectionFailedRtmp(final String s) {
+    public void onConnectionFailedRtmp() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Snackbar.make(rootView, "Streaming failed. Error: " + s, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(rootView, "Streaming failed.", Snackbar.LENGTH_SHORT).show();
 
                 if (rtmpCamera.isStreaming()) {
                     stopStream();

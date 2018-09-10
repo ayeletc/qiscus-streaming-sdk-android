@@ -13,7 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
-        android:id="@+id/txt_rtmp_url" />
+        android:id="@+id/txt_rtmp_url"
+        android:text="rtmp://rtmp.qiscus.com/cempaka/abc?token=def" />
 
     <Button
         android:text="Start Stream"
@@ -31,6 +32,7 @@
         android:layout_above="@+id/b_start_stop"
         android:layout_centerHorizontal="true"
         android:layout_margin="10dp"
-        android:id="@+id/b_create_stream" />
+        android:id="@+id/b_create_stream"
+        android:visibility="invisible" />
 
 </RelativeLayout>

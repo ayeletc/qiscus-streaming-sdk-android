@@ -191,12 +191,13 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     }
 
     private void stopStream() {
+        stopTimer();
         streamLiveStatus.setText("Offline");
         broadcast.setText("Start");
         broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
         broadcast.setTextColor(getResources().getColor(R.color.black));
         rtmpCamera.stopStream();
-        stopTimer();
+        rtmpCamera.startPreview();
     }
 
     public void startTimer() {
@@ -246,12 +247,12 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         if (rtmpCamera != null) {
             if (rtmpCamera.isStreaming()) {
+                stopTimer();
                 streamLiveStatus.setText("Offline");
                 broadcast.setText("Start");
                 broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_white));
                 broadcast.setTextColor(getResources().getColor(R.color.black));
                 rtmpCamera.stopStream();
-                stopTimer();
             }
 
             rtmpCamera.stopPreview();

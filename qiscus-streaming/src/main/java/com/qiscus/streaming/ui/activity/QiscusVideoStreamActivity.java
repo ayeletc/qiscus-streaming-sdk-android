@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -31,6 +32,7 @@ import com.qiscus.streaming.data.QiscusStreamParameter;
 
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+import java.net.URISyntaxException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -38,9 +40,11 @@ import java.util.TimerTask;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-
+//
 public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
+    private Socket mSocket;//ayelet
+
 
     private String[] permissions = {
             Manifest.permission.CAMERA,
@@ -103,6 +107,19 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         });
 
         surfaceView.getHolder().addCallback(this);
+        //ayelet
+        try{
+            Log.i("Ayelet", "Socket URL: " + streamUrl + "/dataToApp");
+
+            mSocket = IO.socket(streamUrl + "/dataToApp");
+            Log.i("Ayelet", "Socket is now set with no exceptions");
+
+//            mSocket.on("new message", onNewMessage);
+//            Log.i("Ayelet", "onMessage event is now set with no exceptions");
+
+
+        }catch (URISyntaxException e){}
+        //
     }
 
     @Override
@@ -193,6 +210,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         broadcast.setBackground(getResources().getDrawable(R.drawable.round_button_red));
         broadcast.setTextColor(getResources().getColor(R.color.white));
         rtmpCamera.startStream(streamUrl);
+        //ayelet
+        mSocket.connect();
+        //
     }
 
     private void stopStream() {

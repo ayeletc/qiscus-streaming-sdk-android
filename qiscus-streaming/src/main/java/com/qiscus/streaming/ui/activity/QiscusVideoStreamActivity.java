@@ -34,6 +34,11 @@ import net.ossrs.rtmp.ConnectCheckerRtmp;
 import java.util.Timer;
 import java.util.TimerTask;
 
+//ayelet
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
+
 public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
 

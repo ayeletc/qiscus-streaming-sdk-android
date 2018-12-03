@@ -32,6 +32,9 @@ import com.qiscus.streaming.data.QiscusStreamParameter;
 
 import net.ossrs.rtmp.ConnectCheckerRtmp;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.URISyntaxException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -109,14 +112,20 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         surfaceView.getHolder().addCallback(this);
         //ayelet
         try{
-            Log.i("Ayelet", "Socket URL: " + streamUrl + "/dataToApp");
+//            Log.i("Ayelet", "Socket URL: " + streamUrl + "/dataToApp");
+            Log.i("Ayelet", "Socket URL: " + "http://132.68.51.63:1937");
+            IO.Options opts = new IO.Options();
+//            opts.port = 1937;
+//            opts.path = "/dataToApp";
+//            opts.path = "/live/stream";
+//            mSocket = IO.socket(streamUrl + "dataToApp");
+            mSocket = IO.socket("http://132.68.51.63:1937");
+            Log.i("Ayelet", "Socket is now set");
 
-            mSocket = IO.socket(streamUrl + "/dataToApp");
-            Log.i("Ayelet", "Socket is now set with no exceptions");
-
-//            mSocket.on("new message", onNewMessage);
-//            Log.i("Ayelet", "onMessage event is now set with no exceptions");
-
+            mSocket.on("match", onMatch);
+            Log.i("Ayelet", "Match event is now set");
+            mSocket.on("clientConnected", onClientConnected);
+            Log.i("Ayelet", "ClientConnected event is now set");
 
         }catch (URISyntaxException e){}
         //
@@ -406,4 +415,44 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             //
         }
     }
+    private Emitter.Listener onMatch = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            Log.i("Ayelet", "inside onMatch");
+
+            QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    String message;
+                    try {
+                        message = data.getString("data");
+                        Log.i("Ayelet", "onMatch got a new message from the server:" + message);
+                    } catch (JSONException e) {
+                        return;
+                    }
+
+                }
+            });
+        }
+    };
+    private Emitter.Listener onClientConnected = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            Log.i("Ayelet", "inside onClientConnected");
+            QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject messageObj = (JSONObject) args[0];
+                    String message;
+                    try {
+                        message = messageObj.getString("data");
+                        Log.i("Ayelet", "onClientConnected got data from the server: " + message);
+                    } catch (JSONException e) {
+                        return;
+                    }
+                }
+            });
+        }
+    };
 }

@@ -46,6 +46,9 @@ import io.socket.emitter.Emitter;
 //
 public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
+    private static final String HTTP_PORT = "1937";
+//    private static final String RTMP_PORT = 1936;
+
     private Socket mSocket;//ayelet
 
 
@@ -111,15 +114,15 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
         surfaceView.getHolder().addCallback(this);
         //ayelet
+
+        String HttpSockerUrl = "" ;
+        HttpSockerUrl = getHttpUrl(streamUrl);
         try{
-//            Log.i("Ayelet", "Socket URL: " + streamUrl + "/dataToApp");
-            Log.i("Ayelet", "Socket URL: " + "http://132.68.51.63:1937");
+
+            Log.i("Ayelet", "Socket URL: " + HttpSockerUrl);
             IO.Options opts = new IO.Options();
-//            opts.port = 1937;
-//            opts.path = "/dataToApp";
-//            opts.path = "/live/stream";
-//            mSocket = IO.socket(streamUrl + "dataToApp");
-            mSocket = IO.socket("http://132.68.51.63:1937");
+
+            mSocket = IO.socket(HttpSockerUrl);
             Log.i("Ayelet", "Socket is now set");
 
             mSocket.on("match", onMatch);
@@ -455,4 +458,13 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             });
         }
     };
+    private String getHttpUrl(String rtmpUrl)
+    {
+        Log.i("Ayelet", "inside getHttpUrl");
+        String httpUrl = "";
+        String[] parts = rtmpUrl.split(":");
+        httpUrl = "http:" + parts[1] + ":" + HTTP_PORT;
+        Log.i("Ayelet", "HTTP Url: " + httpUrl);
+        return httpUrl;
+    }
 }

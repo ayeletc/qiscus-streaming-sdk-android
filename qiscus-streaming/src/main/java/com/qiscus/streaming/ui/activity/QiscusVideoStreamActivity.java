@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.speech.tts.TextToSpeech;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,6 +37,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -47,9 +49,11 @@ import io.socket.emitter.Emitter;
 public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
     private static final String HTTP_PORT = "1937";
-//    private static final String RTMP_PORT = 1936;
+    //private static final String RTMP_PORT = 1936;
 
-    private Socket mSocket;//ayelet
+//    private static final double TTS_DELAY = 0.5;
+
+    private Socket mSocket;
 
 
     private String[] permissions = {
@@ -68,6 +72,15 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     private TimerHandler timerHandler;
     private Timer timer;
     private long elapsedTime;
+
+
+    //ayelet - TTS
+    private TextToSpeech myTTS;
+    private int MY_DATA_CHECK_CODE = 0;
+    private boolean enableTTS = false; //disable the voice notification in case
+    // that the app is not processing
+
+    //
 
     public static Intent generateIntent(Context context, String url, QiscusStreamParameter parameter) {
         Intent intent = new Intent(context, QiscusVideoStreamActivity.class);
@@ -114,15 +127,14 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
         surfaceView.getHolder().addCallback(this);
         //ayelet
-
-        String HttpSockerUrl = "" ;
-        HttpSockerUrl = getHttpUrl(streamUrl);
+        initTTS();
+        String HttpSocketUrl = getHttpUrl(streamUrl);
         try{
 
-            Log.i("Ayelet", "Socket URL: " + HttpSockerUrl);
+            Log.i("Ayelet", "Socket URL: " + HttpSocketUrl);
             IO.Options opts = new IO.Options();
 
-            mSocket = IO.socket(HttpSockerUrl);
+            mSocket = IO.socket(HttpSocketUrl);
             Log.i("Ayelet", "Socket is now set");
 
             mSocket.on("match", onMatch);
@@ -187,14 +199,6 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-
-        /*
-        if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            rtmpCamera.setPreviewOrientation(90);
-        } else if (rtmpCamera != null && newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            rtmpCamera.setPreviewOrientation(0);
-        }
-        */
     }
 
     private void toggleBroadcasting() {
@@ -223,6 +227,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         broadcast.setTextColor(getResources().getColor(R.color.white));
         rtmpCamera.startStream(streamUrl);
         //ayelet
+        enableTTS = true;
         mSocket.connect();
         //
     }
@@ -235,6 +240,8 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         broadcast.setTextColor(getResources().getColor(R.color.black));
         rtmpCamera.stopStream();
         rtmpCamera.startPreview();
+        //ayelet
+        enableTTS = false;
     }
 
     public void startTimer() {
@@ -248,11 +255,6 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                 elapsedTime += 1; //increase every sec
                 timerHandler.obtainMessage(TimerHandler.INCREASE_TIMER).sendToTarget();
 
-                /*
-                if (rtmpCamera == null || !rtmpCamera.isStreaming()) {
-                    timerHandler.obtainMessage(TimerHandler.CONNECTION_LOST).sendToTarget();
-                }
-                */
             }
         }, 0, 1000);
     }
@@ -418,6 +420,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             //
         }
     }
+    //ayelet - Server Respond
     private Emitter.Listener onMatch = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
@@ -430,7 +433,8 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     String message;
                     try {
                         message = data.getString("data");
-                        Log.i("Ayelet", "onMatch got a new message from the server:" + message);
+                        Log.i("Ayelet", "onMatch got a new message from the server: " + message);
+                        speakWords(message);
                     } catch (JSONException e) {
                         return;
                     }
@@ -451,6 +455,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     try {
                         message = messageObj.getString("data");
                         Log.i("Ayelet", "onClientConnected got data from the server: " + message);
+                        speakWords(message);
                     } catch (JSONException e) {
                         return;
                     }
@@ -467,4 +472,60 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         Log.i("Ayelet", "HTTP Url: " + httpUrl);
         return httpUrl;
     }
+    //
+    //ayelet - TTS - Text To Speech
+    // Voice notification from the server, emitted on events
+    private void initTTS() {
+        //Init the object in the oncreate
+        myTTS = new TextToSpeech(QiscusVideoStreamActivity.this, new TextToSpeech.OnInitListener() {
+
+            @Override
+            public void onInit(int status) {
+
+                if(status == TextToSpeech.SUCCESS){
+                    int result=myTTS.setLanguage(Locale.US);
+                    if(result==TextToSpeech.LANG_MISSING_DATA ||
+                            result==TextToSpeech.LANG_NOT_SUPPORTED){
+                        Log.e("error", "This Language is not supported");
+                    }
+                    else{
+                        //speakWords("application is speaking");
+                    }
+                }
+                else
+                    Log.e("error", "Initilization Failed!");
+            }
+        });
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+    }
+
+    private void speakWords(String speech) {
+        //speak straight away
+        Log.i("Ayelet", speech + "TTS" );
+        if(enableTTS) {
+            myTTS.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
+        }
+
+/*        if(enableTTS) { //since the TTS repeat itself twice, we use a boolean that is set to enables the TTS to
+            // speak each TTS_DELAY seconds and set to disable (false) after it speaks
+            myTTS.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
+
+            enableTTS = false;
+
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                enableTTS = false;
+                }
+            }, 0, (int)(1000*TTS_DELAY)); // 1000 = 1 Sek.
+
+        }*/
+
+
+    }
+
+    //
 }

@@ -141,7 +141,10 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             Log.i("Ayelet", "Match event is now set");
             mSocket.on("clientConnected", onClientConnected);
             Log.i("Ayelet", "ClientConnected event is now set");
-
+            mSocket.on("greenLight", onGreenLight);
+            Log.i("Ayelet", "GreenLight event is now set");
+            mSocket.on("redLight", onRedLight);
+            Log.i("Ayelet", "redLight event is now set");
         }catch (URISyntaxException e){}
         //
     }
@@ -203,7 +206,8 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
     private void toggleBroadcasting() {
         if (!rtmpCamera.isStreaming()) {
-            //if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo(streamParameter.videoWidth, streamParameter.videoHeight, streamParameter.videoFps, streamParameter.videoBitrate, false, 90)) {
+            //if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo(streamParameter.videoWidth,
+            // streamParameter.videoHeight, streamParameter.videoFps, streamParameter.videoBitrate, false, 90)) {
             if (rtmpCamera.isRecording() || rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo()) {
                 startStream();
             } else {
@@ -463,6 +467,49 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             });
         }
     };
+
+    private Emitter.Listener onGreenLight = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            Log.i("Ayelet", "inside onGreenLight");
+            QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject messageObj = (JSONObject) args[0];
+                    String message;
+                    try {
+                        message = messageObj.getString("data");
+                        Log.i("Ayelet", "onGreenLight got data from the server: " + message);
+                        speakWords(message);
+                    } catch (JSONException e) {
+                        return;
+                    }
+                }
+            });
+        }
+    };
+
+    private Emitter.Listener onRedLight = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            Log.i("Ayelet", "inside onRedLight");
+            QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject messageObj = (JSONObject) args[0];
+                    String message;
+                    try {
+                        message = messageObj.getString("data");
+                        Log.i("Ayelet", "onRedLight got data from the server: " + message);
+                        speakWords(message);
+                    } catch (JSONException e) {
+                        return;
+                    }
+                }
+            });
+        }
+    };
+
     private String getHttpUrl(String rtmpUrl)
     {
         Log.i("Ayelet", "inside getHttpUrl");

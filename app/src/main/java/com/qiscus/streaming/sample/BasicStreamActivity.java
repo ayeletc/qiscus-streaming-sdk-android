@@ -24,6 +24,9 @@ public class BasicStreamActivity extends AppCompatActivity {
         setContentView(R.layout.activity_simple_stream);
 
         final EditText txtRtmpUrl = (EditText) findViewById(R.id.txt_rtmp_url);
+
+        /* it is possible to stream the video to another server, just to check connection or camera.
+
         Button btnCreate = (Button) findViewById(R.id.b_create_stream);
         btnCreate.setOnClickListener(v -> {
             JSONObject tags = new JSONObject();
@@ -40,6 +43,8 @@ public class BasicStreamActivity extends AppCompatActivity {
                 }
             });
         });
+
+        */
         Button btnStart = (Button) findViewById(R.id.b_start_stop);
         btnStart.setOnClickListener(v -> {
             String streamUrl = txtRtmpUrl.getText().toString();

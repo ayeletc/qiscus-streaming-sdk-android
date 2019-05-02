@@ -49,12 +49,8 @@ import io.socket.emitter.Emitter;
 public class QiscusVideoStreamActivity extends AppCompatActivity implements ConnectCheckerRtmp, SurfaceHolder.Callback {
     private static final String TAG = QiscusVideoStreamActivity.class.getSimpleName();
     private static final String HTTP_PORT = "1937";
-    //private static final String RTMP_PORT = 1936;
-
-//    private static final double TTS_DELAY = 0.5;
 
     private Socket mSocket;
-
 
     private String[] permissions = {
             Manifest.permission.CAMERA,
@@ -77,6 +73,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     //ayelet - TTS
     private TextToSpeech myTTS;
     private int MY_DATA_CHECK_CODE = 0;
+    private boolean absEnableTTS = true; //enable the voice notification absolutely
     private boolean enableTTS = false; //disable the voice notification in case
     // that the app is not processing
 
@@ -127,7 +124,10 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
         surfaceView.getHolder().addCallback(this);
         //ayelet
-        initTTS();
+        if(absEnableTTS){
+            initTTS();
+        }
+
         String HttpSocketUrl = getHttpUrl(streamUrl);
         try{
 
@@ -231,7 +231,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         broadcast.setTextColor(getResources().getColor(R.color.white));
         rtmpCamera.startStream(streamUrl);
         //ayelet
-        enableTTS = true;
+        if(absEnableTTS){
+            enableTTS = true;
+        }
         mSocket.connect();
         //
     }
@@ -554,24 +556,6 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         if(enableTTS) {
             myTTS.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
         }
-
-/*        if(enableTTS) { //since the TTS repeat itself twice, we use a boolean that is set to enables the TTS to
-            // speak each TTS_DELAY seconds and set to disable (false) after it speaks
-            myTTS.speak(speech, TextToSpeech.QUEUE_FLUSH, null);
-
-            enableTTS = false;
-
-            Timer timer = new Timer();
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                enableTTS = false;
-                }
-            }, 0, (int)(1000*TTS_DELAY)); // 1000 = 1 Sek.
-
-        }*/
-
-
     }
 
     //

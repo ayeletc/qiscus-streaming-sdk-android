@@ -39,7 +39,9 @@
         <activity
             android:name=".SimpleCustomChatActivity"
             android:label="@string/title_activity_simple_custom_chat"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
     </application>
 
 </manifest>

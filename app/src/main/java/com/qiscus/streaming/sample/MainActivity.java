@@ -19,6 +19,9 @@ import com.qiscus.streaming.util.CreateStreamListener;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -30,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+// ayelet - remove?
         Qiscus.setUser("ganjar2@ganjar.com", "12345678")
                 .withUsername("Ganjar2")
                 .save()
@@ -44,13 +47,30 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         startStream();
-
-        overridePendingTransition(R.transition.slide_in, R.transition.slide_out);
+//
+        overridePendingTransition(R.transition.slide_in, R.transition.slide_out); // ayelet - move?
 
         Button one = (Button) findViewById(R.id.basic);
-        one.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, BasicStreamActivity.class)));
+//        one.setVisibility(View.INVISIBLE);
+
+//      ayelet - START
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+//                one.setVisibility(View.VISIBLE);
+                one.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, BasicStreamActivity.class)));
+                startActivity(new Intent(MainActivity.this, BasicStreamActivity.class));
+
+            }
+        }, 3000);
+/*
+
         Button two = (Button) findViewById(R.id.integration);
         two.setOnClickListener(v -> openSimpleCustomChat(v));
+
+        END
+  */
+
     }
 
     public void openSimpleCustomChat(View view) {

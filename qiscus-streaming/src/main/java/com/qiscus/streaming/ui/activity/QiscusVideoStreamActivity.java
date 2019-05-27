@@ -54,7 +54,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
 
     private String[] permissions = {
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
+//            Manifest.permission.RECORD_AUDIO,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
@@ -75,7 +75,12 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     private int MY_DATA_CHECK_CODE = 0;
     private boolean absEnableTTS = true; //enable the voice notification absolutely
     private boolean enableTTS = false; //disable the voice notification in case
+//    private boolean speaking = false; // to enable speaking once in 2 sec
     // that the app is not processing
+    private boolean inGreenLight = false;
+    private boolean inRedLight = false;
+    private boolean changeEvents = true; // to enable speaking only when switching events
+
 
     //
 
@@ -470,10 +475,20 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         }
     };
 
+
     private Emitter.Listener onGreenLight = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             Log.i("Ayelet", "inside onGreenLight");
+            if(!inGreenLight) { // was in red light event or first event in streaming
+                inGreenLight = true;
+                if(inRedLight){ // change from red to green
+                    inRedLight = false;
+                    changeEvents = true;
+                }
+            }
+            else // green after green
+                changeEvents = false;
             QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -482,7 +497,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     try {
                         message = messageObj.getString("data");
                         Log.i("Ayelet", "onGreenLight got data from the server: " + message);
-                        speakWords(message);
+                        if(changeEvents)
+                            speakWords(message);
+
                     } catch (JSONException e) {
                         return;
                     }
@@ -495,6 +512,16 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         @Override
         public void call(final Object... args) {
             Log.i("Ayelet", "inside onRedLight");
+            if(!inRedLight) { // was in red light event or first event in streaming
+                inRedLight = true;
+                if(inGreenLight){ // change from green to red
+                    inGreenLight = false;
+                    changeEvents = true;
+                }
+            }
+            else // red after red
+                changeEvents = false;
+
             QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -503,7 +530,25 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     try {
                         message = messageObj.getString("data");
                         Log.i("Ayelet", "onRedLight got data from the server: " + message);
-                        speakWords(message);
+
+                        if(changeEvents)
+                            speakWords(message);
+
+//                        if(!speaking) {
+//                            speakWords(message);
+//                            speaking = true;
+//                        } else{
+//
+//
+//                            Timer timer = new Timer();
+//                            TimerTask tt = new TimerTask() {
+//                                public void run() {
+//                                    Log.i("Ayelet", "onRedLight in delay");
+//
+//
+//                                }
+//                            };
+
                     } catch (JSONException e) {
                         return;
                     }

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -80,7 +81,8 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
     private boolean inGreenLight = false;
     private boolean inRedLight = false;
     private boolean changeEvents = true; // to enable speaking only when switching events
-
+    private MediaPlayer mMediaPlayerWalk; // media player for walk sound
+    private MediaPlayer mMediaPlayerDontWalk; // media player for don't-walk sound
 
     //
 
@@ -151,6 +153,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             mSocket.on("redLight", onRedLight);
             Log.i("Ayelet", "redLight event is now set");
         }catch (URISyntaxException e){}
+
+        mMediaPlayerWalk = MediaPlayer.create(this, R.raw.walksound);
+        mMediaPlayerWalk.setLooping(true);
+        mMediaPlayerDontWalk = MediaPlayer.create(this, R.raw.dontwalksound);
+        mMediaPlayerDontWalk.setLooping(true);
         //
     }
 
@@ -253,6 +260,11 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         rtmpCamera.startPreview();
         //ayelet
         enableTTS = false;
+        //reset media players
+        mMediaPlayerWalk.pause();
+        mMediaPlayerWalk.seekTo(0);
+        mMediaPlayerDontWalk.pause();
+        mMediaPlayerDontWalk.seekTo(0);
     }
 
     public void startTimer() {
@@ -480,8 +492,15 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         @Override
         public void call(final Object... args) {
             Log.i("Ayelet", "inside onGreenLight");
+            if(mMediaPlayerDontWalk.isPlaying()) {
+                mMediaPlayerDontWalk.pause();
+                mMediaPlayerDontWalk.seekTo(0);
+            }
             if(!inGreenLight) { // was in red light event or first event in streaming
                 inGreenLight = true;
+                if(!mMediaPlayerWalk.isPlaying())
+                    mMediaPlayerWalk.start();
+
                 if(inRedLight){ // change from red to green
                     inRedLight = false;
                     changeEvents = true;
@@ -489,6 +508,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
             }
             else // green after green
                 changeEvents = false;
+
             QiscusVideoStreamActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -497,9 +517,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                     try {
                         message = messageObj.getString("data");
                         Log.i("Ayelet", "onGreenLight got data from the server: " + message);
-                        if(changeEvents)
+                        if(changeEvents) {
                             speakWords(message);
-
+                        }
                     } catch (JSONException e) {
                         return;
                     }
@@ -512,8 +532,14 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         @Override
         public void call(final Object... args) {
             Log.i("Ayelet", "inside onRedLight");
+            if(mMediaPlayerWalk.isPlaying()) {
+                mMediaPlayerWalk.pause();
+                mMediaPlayerWalk.seekTo(0);
+            }
             if(!inRedLight) { // was in red light event or first event in streaming
                 inRedLight = true;
+                if(!mMediaPlayerDontWalk.isPlaying())
+                    mMediaPlayerDontWalk.start();
                 if(inGreenLight){ // change from green to red
                     inGreenLight = false;
                     changeEvents = true;
@@ -531,23 +557,9 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                         message = messageObj.getString("data");
                         Log.i("Ayelet", "onRedLight got data from the server: " + message);
 
-                        if(changeEvents)
+                        if(changeEvents) {
                             speakWords(message);
-
-//                        if(!speaking) {
-//                            speakWords(message);
-//                            speaking = true;
-//                        } else{
-//
-//
-//                            Timer timer = new Timer();
-//                            TimerTask tt = new TimerTask() {
-//                                public void run() {
-//                                    Log.i("Ayelet", "onRedLight in delay");
-//
-//
-//                                }
-//                            };
+                        }
 
                     } catch (JSONException e) {
                         return;

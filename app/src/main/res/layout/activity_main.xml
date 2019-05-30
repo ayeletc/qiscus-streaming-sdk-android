@@ -10,7 +10,21 @@
     tools:context="com.qiscus.streaming.sample.MainActivity">
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/imageViewTechnion"
+        android:layout_width="81dp"
+        android:layout_height="65dp"
+        android:layout_gravity="top|right"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/technion_logo0" />
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="359dp"
+        android:layout_height="56dp">
+
+    </android.support.constraint.ConstraintLayout>
+
+    <ImageView
+        android:id="@+id/imageViewSipl"
         android:layout_width="400dp"
         android:layout_height="200dp"
         app:srcCompat="@drawable/sipl_logo" />
@@ -42,5 +56,11 @@
         android:textColorLink="@android:color/holo_blue_bright"
         android:textSize="24sp"
         android:textStyle="bold" />
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="92dp">
+
+    </android.support.constraint.ConstraintLayout>
 
 </LinearLayout>

@@ -158,6 +158,7 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         mMediaPlayerWalk.setLooping(true);
         mMediaPlayerDontWalk = MediaPlayer.create(this, R.raw.dontwalksound);
         mMediaPlayerDontWalk.setLooping(true);
+
         //
     }
 
@@ -260,11 +261,14 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         rtmpCamera.startPreview();
         //ayelet
         enableTTS = false;
-        //reset media players
+        myTTS.shutdown();
+//        reset media players
+
         mMediaPlayerWalk.pause();
         mMediaPlayerWalk.seekTo(0);
         mMediaPlayerDontWalk.pause();
         mMediaPlayerDontWalk.seekTo(0);
+
     }
 
     public void startTimer() {
@@ -492,14 +496,17 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
         @Override
         public void call(final Object... args) {
             Log.i("Ayelet", "inside onGreenLight");
+
             if(mMediaPlayerDontWalk.isPlaying()) {
                 mMediaPlayerDontWalk.pause();
                 mMediaPlayerDontWalk.seekTo(0);
             }
+
             if(!inGreenLight) { // was in red light event or first event in streaming
                 inGreenLight = true;
                 if(!mMediaPlayerWalk.isPlaying())
                     mMediaPlayerWalk.start();
+
 
                 if(inRedLight){ // change from red to green
                     inRedLight = false;
@@ -536,10 +543,14 @@ public class QiscusVideoStreamActivity extends AppCompatActivity implements Conn
                 mMediaPlayerWalk.pause();
                 mMediaPlayerWalk.seekTo(0);
             }
+
             if(!inRedLight) { // was in red light event or first event in streaming
                 inRedLight = true;
+
                 if(!mMediaPlayerDontWalk.isPlaying())
                     mMediaPlayerDontWalk.start();
+
+
                 if(inGreenLight){ // change from green to red
                     inGreenLight = false;
                     changeEvents = true;

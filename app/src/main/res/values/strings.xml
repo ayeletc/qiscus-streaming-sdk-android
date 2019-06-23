@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SIPL Streaming App</string> <!--ayelet - change the name for debug-->
+    <string name="app_name">SIPL Traffic</string> <!--ayelet - change the name for debug-->
     <string name="title_activity_simple_custom_chat">SimpleCustomChatActivity</string>
 
      TODO: Remove or change this placeholder text

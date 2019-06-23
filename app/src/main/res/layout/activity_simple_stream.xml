@@ -17,7 +17,7 @@
         android:fontFamily="sans-serif"
         android:hint="rtmp://xxx.xxx.xxx.xxx:1936/live/stream"
         android:inputType="textUri"
-        android:text="rtmp://xxx.xxx.xxx.xxx:1936/live/stream"
+        android:text="rtmp://132.68.51.81:1936/live/stream"
         android:textSize="18sp" />
 
     <Button
